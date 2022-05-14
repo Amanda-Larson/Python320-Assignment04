@@ -169,11 +169,26 @@ def delete_status():
         print("Status was successfully deleted")
 
 
+@pysnooper.snoop(depth=3)
+def search_all_status_updates():
+    try:
+        user_id = input('Which user id would you like to search: ')
+        main.search_all_status_updates(user_id)
+        return user_id
+    except Exception as error:
+        print(error)
+
+@staticmethod
+def status_generator():
+    pass
+
+
 def quit_program():
     """
     Quits program
     """
     sys.exit()
+
 
 
 if __name__ == '__main__':
@@ -193,6 +208,7 @@ if __name__ == '__main__':
         'H': update_status,
         'I': search_status,
         'J': delete_status,
+        'K': search_all_status_updates,
         'Q': quit_program
     }
 
@@ -208,6 +224,7 @@ if __name__ == '__main__':
                             H: Update status
                             I: Search status
                             J: Delete status
+                            K: Search all status updates
                             Q: Quit
 
                             Please enter your choice: """)

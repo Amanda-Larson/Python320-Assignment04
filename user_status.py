@@ -86,3 +86,15 @@ class UserStatusCollection(sn.BaseModel):
         except pw.DoesNotExist:
             # logger.info(e)
             print('Status ID does not exist, please try again.')
+
+    @staticmethod
+    def search_all_status_updates(user_id):
+        try:
+            find_user = UserStatusCollection.get(UserStatusCollection.user_id == user_id)
+            find_statuses = UserStatusCollection.select().where(UserStatusCollection.user_id == find_user)
+            statuses = [status.status_text for status in find_statuses]
+            return statuses
+        except pw.DoesNotExist:
+            print('This user id does not exist, please try another...')
+        except Exception as error:
+            logger.info(error)

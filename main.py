@@ -223,3 +223,8 @@ def search_status(status_id):
         return False
 
     return user_status.UserStatusCollection.search_status(status_id)
+
+
+def search_all_status_updates(user_id):
+    found_statuses = user_status.UserStatusCollection.search_all_status_updates(user_id)
+    return found_statuses
