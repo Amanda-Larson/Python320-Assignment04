@@ -75,6 +75,7 @@ def load_status_updates(filename):
     """
 
     # i spent 4 hours trying to make it faster and this is actually slower - takes 4 minutes
+    # added a print statement "loading..." in menu and it works in 8 seconds???
     try:
         with open(filename, newline='', encoding="UTF-8") as file:
             dict_table = [{k.lower(): v for k, v in row.items()}
@@ -91,27 +92,44 @@ def load_status_updates(filename):
         logger.info(error)
 
 
-# # this works, but it is very slow vv
-#     user_status.UserStatusCollection.db_connect()
-#     try:
-#         with open(filename, newline='', encoding="UTF-8") as file:
-#             file_status = csv.DictReader(file)
-#             for row in file_status:
-#                 try:
-#                     with sn.db.transaction():
-#                         new_status = user_status.UserStatusCollection.create(
-#                             user_id=row['USER_ID'],
-#                             status_id=row['STATUS_ID'],
-#                             status_text=row['STATUS_TEXT'])
-#                         new_status.save()
-#                         logger.info('Got to here')
-#
-#                 except Exception as e:
-#                     logger.info('Error creating status')
-#                     logger.info(e)
-#     except FileNotFoundError:
-#         print('File not found')
+def quick_start():
+    accounts = 'accounts.csv'
+    statuses = 'status_updates.csv'
+    print('Loading database tables..')
+    try:
+        with open(accounts, newline='', encoding="UTF-8") as file:
+            file_users = csv.DictReader(file)
+            for row in file_users:
+                try:
+                    with sn.db.transaction():
+                        new_user = users.UserCollection.create(
+                            user_id=row['USER_ID'],
+                            email=row['EMAIL'],
+                            user_name=row['NAME'],
+                            user_last_name=row['LASTNAME'])
+                        new_user.save()
 
+
+                except Exception as error:
+                    logger.info('Error creating user')
+                    logger.info(error)
+    except FileNotFoundError:
+        print('File not found')
+
+    try:
+        with open(statuses, newline='', encoding="UTF-8") as file:
+            dict_table = [{k.lower(): v for k, v in row.items()}
+                          for row in csv.DictReader(file, skipinitialspace=True)]
+    except FileNotFoundError:
+        logger.info('File not found...')
+
+    try:
+        with sn.db.atomic():
+            for idx in range(0, len(dict_table), 100):
+                user_status.UserStatusCollection.insert_many(dict_table[idx:idx + 100]).execute()
+    except Exception as error:
+        logger.info('Did not add statuses to the database.')
+        logger.info(error)
 
 def add_user(user_id, email, user_name, user_last_name):
     """
@@ -228,3 +246,8 @@ def search_status(status_id):
 def search_all_status_updates(user_id):
     found_statuses = user_status.UserStatusCollection.search_all_status_updates(user_id)
     return found_statuses
+
+
+def filter_status_by_string(string):
+    filtered_statuses = user_status.UserStatusCollection.filter_status_by_string(string)
+    return filtered_statuses

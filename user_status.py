@@ -90,11 +90,19 @@ class UserStatusCollection(sn.BaseModel):
     @staticmethod
     def search_all_status_updates(user_id):
         try:
-            find_user = UserStatusCollection.get(UserStatusCollection.user_id == user_id)
-            find_statuses = UserStatusCollection.select().where(UserStatusCollection.user_id == find_user)
+            # find_user = UserStatusCollection.get(UserStatusCollection.user_id == user_id)
+            find_statuses = UserStatusCollection.select().where(UserStatusCollection.user_id == user_id)
+            logger.info(find_statuses)
             statuses = [status.status_text for status in find_statuses]
             return statuses
         except pw.DoesNotExist:
             print('This user id does not exist, please try another...')
-        except Exception as error:
+        except TypeError as error:
             logger.info(error)
+
+    @staticmethod
+    def filter_status_by_string(string):
+        query = UserStatusCollection.select().where(UserStatusCollection.status_text.contains(string)).iterator()
+        logger.info(query)
+        # matching_statuses = [status.status_text for status in query]
+        return query

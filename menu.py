@@ -44,9 +44,9 @@ def add_user():
     if not users.UserCollection.search_user(user_id=user_id) is None:
         print('Added users must be unique - please try a different user id.')
     elif main.add_user(user_id,
-                     email,
-                     user_name,
-                     user_last_name):
+                       email,
+                       user_name,
+                       user_last_name):
         print("User was successfully added")
     else:
         print("Unknown error")
@@ -171,16 +171,69 @@ def delete_status():
 
 @pysnooper.snoop(depth=3)
 def search_all_status_updates():
+    user_id = input('Which user id would you like to search: ')
+    status_table = main.search_all_status_updates(user_id)
+    generator = status_generator(status_table)
+    print(f'{len(status_table)} status update(s) was/were located for {user_id}')
     try:
-        user_id = input('Which user id would you like to search: ')
-        main.search_all_status_updates(user_id)
-        return user_id
+        while True:
+            next_line = input('Would you like to see the previous status update? Y/N')
+            if 'y' == next_line.lower():
+                print(generator.__next__())
+                logger.exception()
+            elif 'n' == next_line.lower():
+                print('Okay, back to main menu')
+                break
+            else:
+                print(f'Would you like to see the previous status for {user_id}? Please press Y or N.')
     except Exception as error:
-        print(error)
+        logger.info(error)
+    except StopIteration as end:
+        logger.info(end)
 
-@staticmethod
-def status_generator():
-    pass
+
+def status_generator(status_list):
+    status_count = len(status_list)
+    index = 0
+    while index < status_count:
+        yield status_list[index]
+        index += 1
+
+
+@pysnooper.snoop(depth=2)
+def filter_status_by_string():
+    query_word = input('What words would you like to search for in status updates? ')
+    query = main.filter_status_by_string(query_word)
+    # iter_query = iter(query)
+    # next_result = next(query)
+    while True:
+        next_line = input('Would you like to see the next status with your matching keyword?')
+        if 'y' == next_line.lower():
+            print(f'Status: {next(query).status_text}')
+            del_yn = input('Would you like to delete this status update? (Y/N)')
+            if 'y' == del_yn.lower():
+                next(query).delete_instance()
+                print(f'Status{next(query)} has been deleted.')
+            elif 'n' == del_yn.lower():
+                continue
+        elif 'n' == next_line.lower():
+            print('Okay, back to main menu')
+            break
+        else:
+            print('Would you like to see the next status? Please press Y or N.')
+
+
+def flagged_status_updates():
+    flagged_word = input('What words would you like to use to flag status updates? ')
+    flagged = main.filter_status_by_string(flagged_word)
+    flagged_tuples = [(status.status_id, status.status_text) for status in flagged]
+    for tuple in flagged_tuples:
+        print(tuple)
+    return flagged_tuples
+
+
+def quick_start():
+    main.quick_start()
 
 
 def quit_program():
@@ -190,41 +243,47 @@ def quit_program():
     sys.exit()
 
 
-
 if __name__ == '__main__':
     # user_collection = main.init_user_collection()
     users.UserCollection.db_connect()
     user_status.UserStatusCollection.db_connect()
+
     # status_collection = main.init_status_collection()
 
     menu_options = {
-        'A': load_users,
-        'B': load_status_updates,
-        'C': add_user,
-        'D': update_user,
-        'E': search_user,
-        'F': delete_user,
-        'G': add_status,
-        'H': update_status,
-        'I': search_status,
-        'J': delete_status,
-        'K': search_all_status_updates,
+        'A': quick_start,
+        'B': load_users,
+        'C': load_status_updates,
+        'D': add_user,
+        'E': update_user,
+        'F': search_user,
+        'G': delete_user,
+        'H': add_status,
+        'I': update_status,
+        'J': search_status,
+        'K': delete_status,
+        'L': search_all_status_updates,
+        'M': filter_status_by_string,
+        'N': flagged_status_updates,
         'Q': quit_program
     }
 
     while True:
         user_selection = input("""
-                            A: Load user database
-                            B: Load status database
-                            C: Add user
-                            D: Update user
-                            E: Search user
-                            F: Delete user
-                            G: Add status
-                            H: Update status
-                            I: Search status
-                            J: Delete status
-                            K: Search all status updates
+                            A: Quick start
+                            B: Load user database
+                            C: Load status database
+                            D: Add user
+                            E: Update user
+                            F: Search user
+                            G: Delete user
+                            H: Add status
+                            I: Update status
+                            J: Search status
+                            K: Delete status
+                            L: Search all status updates
+                            M: Filter status by keyword
+                            N: Flag status updates
                             Q: Quit
 
                             Please enter your choice: """)
