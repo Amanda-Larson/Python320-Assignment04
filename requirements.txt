@@ -3,4 +3,5 @@ peewee
 pysqlite3
 pysnooper
 pandas
+pylint
 

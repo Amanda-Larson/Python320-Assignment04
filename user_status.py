@@ -2,6 +2,8 @@
 classes to manage the user status messages
 """
 # pylint: disable=R0903
+# pylint: disable=W0703
+
 from loguru import logger
 import peewee as pw
 
@@ -38,15 +40,17 @@ class UserStatusCollection(sn.BaseModel):
         """
         add a new status message to the collection
         """
-        if users.UserCollection.user_id is not None:
-            try:
-                add_new_status = UserStatusCollection.create(status_id=status_id, user_id=user_id,
-                                                             status_text=status_text)
-                return add_new_status
-            except Exception as e:
-                logger.info(e)
-        else:
-            raise pw.DoesNotExist
+        try:
+            new_status = UserStatusCollection.create(
+                status_id=status_id,
+                user_id=user_id,
+                status_text=status_text
+            )
+            new_status.save()
+            return True
+        except pw.IntegrityError as error:
+            logger.exception(error)
+            return False
 
     @staticmethod
     def modify_status(status_id, user_id, status_text):
@@ -55,22 +59,33 @@ class UserStatusCollection(sn.BaseModel):
 
         The new user_id and status_text are assigned to the existing message
         """
-        if status_id not in UserStatusCollection.status_id:
-            logger.info("Status_id {status_id} does not exist")
+
+        try:
+            if status_id not in UserStatusCollection.status_id:
+                logger.info("Status_id {status_id} does not exist")
+                return False
+            modify_status = UserStatusCollection.get(UserStatusCollection.status_id == status_id)
+            modify_status.user_id = user_id
+            modify_status.status_text = status_text
+            modify_status.save()
+            return True
+        except pw.DoesNotExist as error:
+            logger.exception(error)
             return False
-        UserStatusCollection.user_id = user_id
-        UserStatusCollection.status_text = status_text
-        return True
 
     @staticmethod
     def delete_status(status_id):
         """
         deletes the status message with id, status_id
         """
-        del_status = UserStatusCollection.select().where(
-            UserStatusCollection.status_id == status_id).get()
-        del_status.delete_instance()
-        return del_status
+        try:
+            del_status = UserStatusCollection.get(
+                UserStatusCollection.status_id == status_id)
+            del_status.delete_instance()
+            return del_status
+        except pw.DoesNotExist as error:
+            logger.exception(error)
+            return False
 
     @staticmethod
     def search_status(status_id):
@@ -86,23 +101,29 @@ class UserStatusCollection(sn.BaseModel):
         except pw.DoesNotExist:
             # logger.info(e)
             print('Status ID does not exist, please try again.')
+            return None
 
     @staticmethod
     def search_all_status_updates(user_id):
+        """This searches all status updates"""
         try:
-            # find_user = UserStatusCollection.get(UserStatusCollection.user_id == user_id)
-            find_statuses = UserStatusCollection.select().where(UserStatusCollection.user_id == user_id)
+            find_statuses = UserStatusCollection.select() \
+                .where(UserStatusCollection.user_id == user_id)
             logger.info(find_statuses)
             statuses = [status.status_text for status in find_statuses]
             return statuses
         except pw.DoesNotExist:
             print('This user id does not exist, please try another...')
+            return None
         except TypeError as error:
             logger.info(error)
+            return None
 
     @staticmethod
     def filter_status_by_string(string):
-        query = UserStatusCollection.select().where(UserStatusCollection.status_text.contains(string)).iterator()
+        """This filters all statuses by a user-input string"""
+        query = UserStatusCollection.select() \
+            .where(UserStatusCollection.status_text.contains(string)).iterator()
         logger.info(query)
         # matching_statuses = [status.status_text for status in query]
         return query

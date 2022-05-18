@@ -9,6 +9,8 @@ import user_status
 import users
 import socialnetworkmodel as sn
 
+# pylint: disable=W0703
+# pylint: disable=E1120
 
 def init_user_collection():
     """
@@ -93,6 +95,8 @@ def load_status_updates(filename):
 
 
 def quick_start():
+    """This is a quickstart method that calls menu items A and B with hardcoded cav paths
+    """
     accounts = 'accounts.csv'
     statuses = 'status_updates.csv'
     print('Loading database tables..')
@@ -244,10 +248,12 @@ def search_status(status_id):
 
 
 def search_all_status_updates(user_id):
+    """Searches all status updates"""
     found_statuses = user_status.UserStatusCollection.search_all_status_updates(user_id)
     return found_statuses
 
 
 def filter_status_by_string(string):
+    """filters statuses by a string"""
     filtered_statuses = user_status.UserStatusCollection.filter_status_by_string(string)
     return filtered_statuses

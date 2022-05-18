@@ -57,24 +57,23 @@ class UserCollection(sn.BaseModel):
         """
         Modifies an existing user
         """
-        if user_id not in UserCollection.user_id:
-            logger.info(f'{user_id} not in the database')
-            return False
-        UserCollection.email = email
-        UserCollection.user_name = user_name
-        UserCollection.user_last_name = user_last_name
-        updated = UserCollection(user_id=user_id, email=email,
-                                 user_name=user_name,
-                                 user_last_name=user_last_name)
-        updated.save()
-        return True
+        with sn.db.transaction():
+            if user_id not in UserCollection.user_id:
+                logger.info(f'{user_id} not in the database')
+                return False
+            update = UserCollection.get(UserCollection.user_id == user_id)
+            update.email = email
+            update.user_name = user_name
+            update.user_last_name = user_last_name
+            update.save()
+            return True
 
     @staticmethod
     def delete_user(user_id):
         """
         Deletes an existing user
         """
-        del_user = UserCollection.select().where(UserCollection.user_id == user_id).get()
+        del_user = UserCollection.get(UserCollection.user_id == user_id)
         del_user.delete_instance()
         return del_user
 
@@ -90,3 +89,4 @@ class UserCollection(sn.BaseModel):
         except pw.DoesNotExist:
             # logger.info(e)
             print(f'Could not find user {user_id}.')
+            return False

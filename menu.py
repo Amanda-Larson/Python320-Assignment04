@@ -12,6 +12,8 @@ logger.info("Let's get to debugging")
 logger.add("out.log", backtrace=True, diagnose=True)
 
 
+# pylint: disable=W0703
+
 # @pysnooper.snoop(depth=2)
 def load_users():
     """
@@ -102,14 +104,6 @@ def delete_user():
         print("User was successfully deleted")
 
 
-# @pysnooper.snoop(depth=3)
-# def save_users():
-#     """
-#     Saves user database into a file
-#     """
-#     # filename = input('Enter filename for users file: ')
-#     main.save_users(user_collection)
-
 # @pysnooper.snoop(depth=2)
 def add_status():
     """
@@ -171,6 +165,7 @@ def delete_status():
 
 @pysnooper.snoop(depth=3)
 def search_all_status_updates():
+    """Searches all statuses"""
     user_id = input('Which user id would you like to search: ')
     status_table = main.search_all_status_updates(user_id)
     generator = status_generator(status_table)
@@ -185,14 +180,17 @@ def search_all_status_updates():
                 print('Okay, back to main menu')
                 break
             else:
-                print(f'Would you like to see the previous status for {user_id}? Please press Y or N.')
-    except Exception as error:
-        logger.info(error)
+                print(f'Would you like to see the previous status for {user_id}? '
+                      f'Please press Y or N.')
+    # except Exception as error:
+    #     logger.info(error)
     except StopIteration as end:
         logger.info(end)
 
 
 def status_generator(status_list):
+    """This is a generator function for generating the next
+    status while running search all status updates"""
     status_count = len(status_list)
     index = 0
     while index < status_count:
@@ -200,8 +198,9 @@ def status_generator(status_list):
         index += 1
 
 
-@pysnooper.snoop(depth=2)
+# @pysnooper.snoop(depth=2)
 def filter_status_by_string():
+    """This filters the statuses by a string given by the user"""
     query_word = input('What words would you like to search for in status updates? ')
     query = main.filter_status_by_string(query_word)
     # iter_query = iter(query)
@@ -224,15 +223,17 @@ def filter_status_by_string():
 
 
 def flagged_status_updates():
+    """This flags status updates based on a user string input"""
     flagged_word = input('What words would you like to use to flag status updates? ')
     flagged = main.filter_status_by_string(flagged_word)
     flagged_tuples = [(status.status_id, status.status_text) for status in flagged]
-    for tuple in flagged_tuples:
-        print(tuple)
+    for status_tuple in flagged_tuples:
+        print(status_tuple)
     return flagged_tuples
 
 
 def quick_start():
+    """This calls A and B from the menu and hard codes the csv files in so there is no user input"""
     main.quick_start()
 
 
